@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link rel="icon" href="./img/favicon.ico" type="image/x-icon" />
+  <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+  <link
+          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+          rel="stylesheet"
+  />
+  <link
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css"
+          rel="stylesheet"
+  />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+          href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap"
+          rel="stylesheet"
+  />
+  <script
+          src="https://code.jquery.com/jquery-3.6.0.min.js"
+          integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+          crossorigin="anonymous"
+  ></script>
+  <script
+          src="https://cdn.jsdelivr.net/jquery.cookie/1.4.1/jquery.cookie.min.js"
+
+  ></script>
+
+  <title>Flappy Ball</title>
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 m-auto">
+        <h1 class="logo">
+          Flappy Ball
+        </h1>
+      </div>
+    </div>
+  </div>
+</header>
+<section id="game">
+  <canvas id="game__area" width="1420" height="778"></canvas>
+</section>
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="footer__text"></h1>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+<script>
+  const isMobile = window.screen.width < 400
+  if (isMobile) {
+    document.getElementById('game').innerHTML = `<canvas id="game__area" height="500" width="${window.screen.width - 40}"></canvas>`
+  }
+  const title = $(".logo");
+  title.hide();
+  title.fadeIn(800);
+  //game
+  const canvas = document.getElementById("game__area");
+  const ctx = canvas.getContext("2d");
+  function getTop() {
+    if(isNaN($.cookie('top'))) {
+      $.cookie ('top', '0')
+    }
+    return Number($.cookie('top'))
+  }
+  const world = {
+    // параметры мира
+    height: canvas.offsetHeight,
+    width: canvas.offsetWidth,
+    speed: isMobile ? 1.7 : 3,
+    knock: false,
+    MaxSpeed: 7,
+    score: 0,
+    forceGravity: isMobile ? 0.3 : 0.35,
+    recordScore:getTop(),
+    gameProcess: false,
+    draw() {
+      ctx.fillStyle = "#99E0FF";
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.fillStyle = "white";
+      ctx.font = "25px Arial";
+    }
+  };
+  const ball = {
+    //параметры мяча
+    x: 100,
+    y: world.height / 3,
+    height: isMobile ? 40 : 60,
+    width: isMobile ? 40 : 60,
+    grav: 0,
+    draw: new Image(),
+    jump: isMobile ? 8 : 11,
+    flip() {
+      this.grav -= this.jump;
+    }
+  };
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key == " " || e.key == "ArrowUp") {
+      ball.flip();
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if(world.gameProcess) {
+      ball.flip()
+    }
+  })
+
+  ball.draw.src = "./img/ball.png";
+
+  function Tube(x) {
+    // параметры трубы
+    this.x = x;
+    this.y = 0;
+    this.width = isMobile ? 50 : 80;
+    this.height = isMobile ? world.height / 3.5: world.height/3;
+    this.distBetweenTubes = isMobile ? 190 : 180  ;
+    this.img = new Image();
+    this.img.src = "./img/tube.png";
+    this.draw = () => {
+      ctx.drawImage(
+              //верхняя труба
+              this.img,
+              this.x,
+              this.y - 20,
+              this.width,
+              this.height
+      );
+
+      ctx.drawImage(
+              //нижняя труба
+              this.img,
+              this.x,
+              this.height + this.distBetweenTubes,
+              this.width,
+              world.height
+      );
+    };
+  }
+
+  function cloud(x) {
+    //облака
+    this.x = x;
+    this.y = 150;
+    this.width = 173;
+    this.height = 75;
+    this.img = new Image();
+    this.img.src = "./img/cloud.png";
+    this.draw = () => {
+      ctx.drawImage(
+              //верхняя труба
+              this.img,
+              this.x,
+              this.y,
+              this.width,
+              this.height
+      );
+    };
+  }
+  function Reset() {
+    ball.y = 250;
+    ball.grav = isMobile ? 1 : 0.7;
+    world.speed = isMobile ? 1.7 : 3;
+    ball.jump = isMobile ? 8 : 11;
+    world.knock = false;
+    world.recordScore = Math.max(world.score, world.recordScore);
+    $.cookie('top', `${Math.max(world.score, Number(getTop()))}`)
+    world.score = 0;
+    world.forceGravity = isMobile ? 0.3 : 0.35;
+    tubes = isMobile ? [
+              new Tube(world.width/3),
+              new Tube(world.width)
+            ] :
+            [
+              new Tube(world.width / 2),
+              new Tube((world.width / 2) * 1.5),
+              new Tube(world.width),
+              new Tube(world.width * 1.25)];
+
+    AlertText(StartText);
+  }
+
+  function ballDraw() {
+    ctx.drawImage(ball.draw, ball.x, ball.y, ball.width, ball.height);
+    ctx.fillStyle = "white";
+    ctx.font = "25px Arial";
+    ctx.fillText(`Счёт ${world.score}`, 50, 40);
+    ctx.fillText(`Рекорд ${world.recordScore}`, 50, 80);
+  }
+
+  let tubes =
+    isMobile ? [
+      new Tube(-70),
+      new Tube(world.width/3)
+    ] :
+    [
+      new Tube(world.width / 2),
+      new Tube((world.width / 2) * 1.5),
+      new Tube(world.width),
+      new Tube(world.width * 1.25)];
+  let clouds = [new cloud(world.width), new cloud(world.width * 1.4)];
+
+  function Stop() {
+    world.speed = 0;
+    ball.grav = 0;
+    world.knock = true;
+    ball.jump = 0;
+    world.forceGravity = 0;
+    AlertText(StartText);
+  }
+  const AlertText = (text) => {
+    ctx.fillStyle = "white";
+    ctx.font = isMobile ? "42px Arial" : "100px Arial";
+    if (world.gameProcess) {
+      ctx.fillText(text, isMobile ? 50 : world.width / 3.3, world.height / 2.2);
+    } else {
+      ctx.fillText(text,isMobile ? world.width/5.5 : world.width / 3.3, world.height / 2.0);
+    }
+  };
+  function render() {
+    // отрисовка графики
+
+    world.draw();
+    for (const cloud of clouds) {
+      // появления облаков
+      cloud.draw();
+      cloud.x -= world.speed / 2.5;
+      if (cloud.x + cloud.width < 0) {
+        cloud.x = world.width;
+        cloud.y = (Math.random() * world.height) / 1.3 + world.height / 4;
+      }
+    }
+
+    for (const tube of tubes) {
+      //действия с трубами
+
+      tube.draw(); // отрисовка трубы
+      tube.x -= world.speed; // изменение положения трубы по оси x
+
+      if (tube.x + tube.width < 0) {
+        tube.x = world.width + tube.width; //после скрытия трубы, эта труба меняет свои координаты обратно
+        tube.height = Math.random() * world.height / 5 + tube.distBetweenTubes; // рандомная высота труб
+        if (world.speed <= world.MaxSpeed) world.speed *= isMobile ? 1.040 : 1.075;
+        ball.grav *= 1.01;
+        world.score += 1;
+        world.recordScore = Math.max(world.score, Number(getTop()));
+      }
+      if (
+              tube.x - tube.width < ball.x - ball.width / 2.5  &&
+              tube.x + tube.width > ball.x + 6
+      ) {
+        if (
+                tube.height > ball.y + ball.height / 2   ||
+                tube.height + tube.distBetweenTubes < ball.y + ball.height / 2 + 18
+        ) {
+          StartText = "Game Over!";
+          Stop();
+        }
+      }
+    }
+
+    ballDraw();
+
+    // скорость перемещения труб
+
+    ball.y = ball.y + ball.grav;
+    ball.grav += world.forceGravity; //гравитация;
+
+    if (ball.y > world.height || ball.y < 0) {
+      StartText = "Game Over!";
+      Stop();
+    }
+  }
+  let StartText = "";
+
+  if (!world.gameProcess) {
+    render();
+    StartText = "Click for the start";
+    AlertText(StartText);
+  } // выполнение render() 60 раз в секунду.
+
+  canvas.onclick = () => {
+    if (!world.gameProcess) {
+      world.gameProcess = true;
+      setInterval(render, 1000 / 60);
+    } else {
+      if (world.knock) {
+        Reset();
+      }
+    }
+  };
+
+  const ftext = $(".footer__text");
+  let date = new Date();
+  ftext.text(`Created by Tikhomirov © ${date.getFullYear()}`);
+</script>
+</html>

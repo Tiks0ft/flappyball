@@ -1,0 +1,43 @@
+body {
+  overflow-y: hidden;
+}
+@media (max-width: 420px) {
+  body {
+    overflow-y: scroll !important;
+  }
+}
+header {
+  padding: 20px 0;
+  background-color: #477bff;
+  font-family: "Press Start 2P", cursive;
+  text-align: center;
+  color: white;
+}
+.logo {
+  font-size: 40px;
+}
+#game {
+  padding: 20px 25px;
+  background: #d9ceb4;
+}
+canvas {
+  display: block;
+  margin: 0 auto;
+  border: 2px solid rgb(23, 1, 145);
+}
+footer {
+  background-color: #f4f3f3;
+  text-align: center;
+  font-family: "Russo One", sans-serif;
+  padding: 13px 0;
+}
+.footer__text {
+  color: #477bff;
+  font-size: 24px;
+  margin-bottom: 0px;
+}
+.start {
+  z-index: -9999;
+  padding: 20px 20px;
+}
+
